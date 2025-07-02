@@ -39,8 +39,7 @@ app.use(async (req, res, next) => {
 
 // Handle form submission to log email, name, and IP
 app.post('/log-data', async (req, res) => {
-    const { email, name } = req.body;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const { email, name, ip } = req.body; // Removed timestamp here to match client send
     const timestamp = new Date().toISOString();
 
     try {
