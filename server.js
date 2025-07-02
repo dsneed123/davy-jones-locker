@@ -27,9 +27,12 @@ app.use(async (req, res, next) => {
             // File doesn't exist yet, create new array
         }
 
-        ipData.push({ ip, timestamp, type: 'visit' });
-        await fs.writeFile('ips.json', JSON.stringify(ipData, null, 2));
-        console.log(`Logged IP: ${ip} at ${timestamp}`);
+        // Only log visit if no form data is being processed
+        if (!req.body.email && !req.body.name) {
+            ipData.push({ ip, timestamp, type: 'visit' });
+            await fs.writeFile('ips.json', JSON.stringify(ipData, null, 2));
+            console.log(`Logged IP: ${ip} at ${timestamp}`);
+        }
     } catch (error) {
         console.error('Error logging IP:', error);
     }
@@ -37,9 +40,9 @@ app.use(async (req, res, next) => {
     next();
 });
 
-// Handle form submission to log email, name, and IP
+// Handle form submission to log email, name, and IP in a single entry
 app.post('/log-data', async (req, res) => {
-    const { email, name, ip } = req.body; // Removed timestamp here to match client send
+    const { email, name, ip } = req.body;
     const timestamp = new Date().toISOString();
 
     try {
@@ -51,6 +54,7 @@ app.post('/log-data', async (req, res) => {
             // File doesn't exist yet, create new array
         }
 
+        // Combine IP with form data in a single entry
         ipData.push({ email, name, ip, timestamp, type: 'submission' });
         await fs.writeFile('ips.json', JSON.stringify(ipData, null, 2));
         console.log(`Logged data: ${email}, ${name}, ${ip} at ${timestamp}`);
